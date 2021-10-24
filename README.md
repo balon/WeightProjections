@@ -1,5 +1,5 @@
 ## WeightProjections
-A simple python script that projects the expected date to reach weight loss/gain goals... estimated using the Mifflin-St Jeon equation to automatically adjust TDEE. *This was a small project to help project personal goals and help a friend struggling with their weight estimate safe calorie values to eat daily.*
+A simple python script that projects the expected date to reach weight loss/gain goals... estimated using the Mifflin-St Jeon equation to automatically adjust TDEE. *This was a small project to help with personal goals and to help a friend struggling with their weight estimate safe calorie values to eat daily.*
 
 
 ### Disclaimer & Warning
