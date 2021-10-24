@@ -22,16 +22,16 @@ isMale = False
 age = 19
 active = activity["none"]
 
-# range of calories to approximate and how many to skip between
+# rg = how many cals to go from bmr or limit, skip is how many to skip between estimations
 rg, skp = 500, 100
 
-# skip gain by setting to True, set limit to None to ignore
+# skip gain by setting to False, set limit to None to put a roof
 doGain = True
 limit = None
 
-# loss & gain ranges
-low, lower, lowest = 125, 120, 115
-high, higher, highest =  135, 140, 145
+# loss & gain ranges.. as many as you want, in any order
+losses = [125, 120, 115]
+gains =  [135, 140, 145]
 
 def updateBMR(weight, mul=1.0):
     """Mifflin-St Jeor equation to calculate BMR based on inputs"""
@@ -40,85 +40,53 @@ def updateBMR(weight, mul=1.0):
     else:
         return ((10* (weight * 0.453592)) + (6.25 * startheight) - (5 * age) - 161) * mul
 
-def weightLoss(weight, bmr, mul, daily):
-    dangerCheck = False
-    warnCheck = False
-    deficit = 0
-    day = 0
-    warning = 0
-    danger = 0
+def weightProjection(weight, bmr, mul, daily, goals, gainMode = False):
+    """Project the days-until weight, based on defined goals"""
+    cals, day = 0, 0
+    goalDays = list()
+    currentGoal = 0
 
-    while weight != lowest:
-        if (abs(bmr - daily) < 25):
-            print("∞ days - the difference of bmr & daily is too small")
+    # ensure goals are increasing if gain mode
+    if gainMode is True:
+        goals = sorted(goals, reverse = False)
+    else:
+        goals = sorted(goals, reverse = True)
+    
+    # go until we get to the goal
+    while weight != goals[-1]:
+        if (abs(bmr - daily) < 25) or ((gainMode is True) and (daily < bmr)):
+            print("∞ days - bmr & daily delta cannot be calculated")
             return
 
+        # add to the day, and calc the cals
         day += 1
-        deficit = deficit + (bmr - daily)
+        cals = cals + (daily - bmr) if gainMode else (cals + (bmr - daily))
 
-        if (deficit > lb):
-            weight -= 1
+        # when our cals pass the lbs, add or subtract from weight
+        if (cals > lb):
+            weight = weight + 1 if gainMode else weight - 1
             bmr = updateBMR(weight, mul)
-            deficit = deficit - lb
+            cals = cals - lb
 
-            if (weight == low) and (warnCheck is False):
-                warnCheck = True      
-            if (weight == lower) and (dangerCheck is False):
-                dangerCheck = True
-        
-        if weight == low:
-            warning = day
-        if weight == lower:
-            danger = day
+            # if we pass a goal.. let the user know
+            if (weight == goals[currentGoal]):
+                goalDays.append(day)
+                currentGoal += 1
 
-    warnDate = today + datetime.timedelta(days = warning)
-    badDate = today + datetime.timedelta(days = day)
-    dangerDate = today + datetime.timedelta(days = danger)
+    # add the last one
+    goalDays.append(day)
 
-    print(f"{warning} days until {low}lbs, date: {warnDate}")
-    print(f"{danger} days until {lower}lbs, date: {dangerDate}")
-    print(f"{day} days until {lowest}lbs, date: {badDate}")
+    # find the date we will reach each goal
+    goalDates = list()
+    for goalDay in goalDays:
+        goalDates.append(str(today + datetime.timedelta(days = goalDay)).split()[0])
 
-def weightGain(weight, bmr, mul, daily):
-    dangerCheck = False
-    warnCheck = False
-    surplus = 0
-    day = 0
-    warning = 0
-    danger = 0
-
-    while weight != highest:
-        if (abs(bmr - daily) < 25) or (daily < bmr):
-            print("∞ days - the difference of bmr & daily is too small to calculate")
-            return
-
-        day += 1
-        surplus = surplus + (daily - bmr)
-
-        if (surplus > lb):
-            weight += 1
-            bmr = updateBMR(weight, mul)
-            surplus = surplus - lb
-
-            if (weight == high) and (warnCheck is False):
-                warnCheck = True
-            if (weight == higher) and (dangerCheck is False):
-                dangerCheck = True
-        
-        if weight == high:
-            warning = day
-        if weight == higher:
-            danger = day
-
-    warnDate = today + datetime.timedelta(days = warning)
-    badDate = today + datetime.timedelta(days = day)
-    dangerDate = today + datetime.timedelta(days = danger)
-
-    print(f"{warning} days until {high}lbs, date: {warnDate}")
-    print(f"{danger} days until {higher}lbs, date: {dangerDate}")
-    print(f"{day} days until {highest}lbs, date: {badDate}")
+    # print it all to the user
+    for days, lbs, date in zip(goalDays, goals, goalDates):
+        print(f"{days} days until {lbs}lbs, date: {date}")
 
 def rounddown(x):
+    """Returns the number, rounded down"""
     return int(math.floor(x / 100.0)) * 100
 
 def main():
@@ -132,22 +100,23 @@ def main():
     ghigh = rounddown(updateBMR(startweight)) + rg
     alert = "\nWARNING: calories under 1200 can severely impact your health."
 
+    # start calculating and displaying results
     print(f"Weight Projection; based on stats:")
     print(f"bmr = {startbmr}, activity = {[k for k, v in activity.items() if v == active][0]}, weight = {startweight}lbs, date = {str(today).split()[0]}")
     print()
     print("Calculating for loss --")
-    for cals in range(llow, lhigh, skp):
-        print(f"Estimating at {cals} per day... {alert if cals < 1000 else '' }")
-        weightLoss(weight = startweight, bmr = startbmr, mul = active, daily = cals)
+    for kcals in range(llow, lhigh, skp):
+        print(f"Estimating at {kcals} cals per day... {alert if kcals < 1200 else '' }")
+        weightProjection(weight = startweight, bmr = startbmr, mul = active, daily = kcals, goals = losses, gainMode = False)
         print()
     
     if not doGain:
         return
 
     print("Calculating for gain --")
-    for cals in range(glow, ghigh, skp):
-        print(f"Estimating at {cals} per day...")
-        weightGain(weight = startweight, bmr = startbmr, mul = active, daily = cals)
+    for kcals in range(glow, ghigh, skp):
+        print(f"Estimating at {kcals} cals per day...")
+        weightProjection(weight = startweight, bmr = startbmr, mul = active, daily = kcals, goals = gains, gainMode = True)
         print()
 
 if __name__ == "__main__":
