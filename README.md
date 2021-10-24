@@ -1,8 +1,12 @@
 ## WeightProjections
 A simple python script that projects the expected date to reach weight loss/gain goals... estimated using the Mifflin-St Jeon equation to automatically adjust TDEE. *This was a small project to help project personal goals and help a friend struggling with their weight estimate safe calorie values to eat daily.*
 
+
 ### Disclaimer & Warning
 This is a tool based on a mathematical equation (*Mifflin-St Jeon*), and **should not be used in replacement of medical advice** from a medical professional. The tool will estimate the amount of time it would take (in days) to reach certain weight goals, given you eat at the calories in the projection. There is no bottom-limit, so if you configure the settings to go below 1200, it will calculate that low and display a warning about the potential adverse health impact.
+
+*All base statistics & goals provided in .py file were approved to be released by a friend who helped me in testing.*
+
 
 #### Configuration:
 Everything for configuration is at the top of the file. The `lb` variable defines that 1 lb of fat is equal to 3500 calories. The `activity` variable defines the different multiplier used in most TDEE calculators. The variables you must update to run the script:
