@@ -16,22 +16,23 @@ activity["fairly"] = 1.725
 activity["very"] = 1.9
 
 # persons starting stats (height in cm, weight in lb)
-startheight = 170.18
-startweight = 130
-isMale = False
-age = 19
-active = activity["none"]
+startheight = 182.88
+startweight = 200
+isMale = True
+age = 25
+active = activity["sedentary"]
 
 # rg = how many cals to go from tdee or limit, skip is how many to skip between estimations
-rg, skp = 500, 100
+rg, skp = 1000, 100
 
 # skip gain by setting to False, set limit to None to put a roof
+doLoss = True
 doGain = False
-limit = None
+limit = False
 
 # loss & gain ranges.. as many as you want, in any order
-losses = [125, 120, 115]
-gains =  [135, 140, 145]
+losses = [190, 180, 170, 160]
+gains =  [100, 105, 110, 115]
 
 def updateTDEE(weight, mul=1.0):
     """Mifflin-St Jeor equation to calculate TDEE based on inputs"""
@@ -104,20 +105,19 @@ def main():
     print(f"Weight Projection; based on stats:")
     print(f"tdee = {starttdee}, activity = {[k for k, v in activity.items() if v == active][0]}, weight = {startweight}lbs, date = {str(today).split()[0]}")
     print()
-    print("Calculating for loss --")
-    for kcals in range(llow, lhigh, skp):
-        print(f"Estimating at {kcals} cals per day... {alert if kcals < 1200 else '' }")
-        weightProjection(weight = startweight, tdee = starttdee, mul = active, daily = kcals, goals = losses, gainMode = False)
-        print()
+    if doLoss:
+        print("Calculating for loss --")
+        for kcals in range(llow, lhigh, skp):
+            print(f"Estimating at {kcals} cals per day... {alert if kcals < 1200 else '' }")
+            weightProjection(weight = startweight, tdee = starttdee, mul = active, daily = kcals, goals = losses, gainMode = False)
+            print()
     
-    if not doGain:
-        return
-
-    print("Calculating for gain --")
-    for kcals in range(glow, ghigh, skp):
-        print(f"Estimating at {kcals} cals per day...")
-        weightProjection(weight = startweight, tdee = starttdee, mul = active, daily = kcals, goals = gains, gainMode = True)
-        print()
+    if doGain:
+        print("Calculating for gain --")
+        for kcals in range(glow, ghigh, skp):
+            print(f"Estimating at {kcals} cals per day...")
+            weightProjection(weight = startweight, tdee = starttdee, mul = active, daily = kcals, goals = gains, gainMode = True)
+            print()
 
 if __name__ == "__main__":
     main()
